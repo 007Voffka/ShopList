@@ -18,9 +18,6 @@ class MainActivity : AppCompatActivity() {
         viewModel.getShopList().observe(this) {
             Log.i("MyLoadingTest", it.toString())
         }
-        //viewModel.addShopItem(ShopItem("Bread", 2, false))
-        //viewModel.addShopItem(ShopItem("Milk", 1, false))
-        //viewModel.addShopItem(ShopItem("Cookies", 3, false))
         viewModel.editShopItem(1, "Bread", 4, false)
     }
 }
