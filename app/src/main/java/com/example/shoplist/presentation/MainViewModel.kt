@@ -17,15 +17,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val getShopListUseCase = GetShopListUseCase(repository)
     private val deleteShopListUseCase = DeleteShopItemUseCase(repository)
     private val editShopListUseCase = EditShopItemUseCase(repository)
-    private val addShopItemUseCase = AddShopItemUseCase(repository)
-    private val getShopItemUseCase = GetShopItemUseCase(repository)
 
     fun getShopList() : LiveData<List<ShopItem>> {
         return getShopListUseCase.getShopList()
-    }
-
-    fun getShopItem(itemId : Int): LiveData<ShopItem> {
-        return getShopItemUseCase.getShopItem(itemId)
     }
 
     fun editShopItem(id : Int, name : String, count : Int, isChecked : Boolean) {
@@ -40,16 +34,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteShopItem(itemId : Int) {
         val disposable = deleteShopListUseCase.deleteShopItem(itemId)
-            .subscribeOn(Schedulers.io())
-            .subscribe({
-            }, {
-                Log.i("Here is exception", it.toString())
-            })
-        compositeDisposable.add(disposable)
-    }
-
-    fun addShopItem(shopItem: ShopItem) {
-        val disposable = addShopItemUseCase.addShopItem(shopItem)
             .subscribeOn(Schedulers.io())
             .subscribe({
             }, {
