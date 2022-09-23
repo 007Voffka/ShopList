@@ -1,22 +1,26 @@
 package com.example.shoplist.presentation
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoplist.R
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var shopListAdapter: ShopListAdapter
+    private lateinit var floatingButton: FloatingActionButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        floatingButton = findViewById(R.id.buttonAddShopItem)
         setupRecyclerView()
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         viewModel.getShopList().observe(this) {
@@ -37,15 +41,20 @@ class MainActivity : AppCompatActivity() {
                 ShopListAdapter.CHECKED_TYPE, ShopListAdapter.MAX_POOL_SIZE
             )
         }
-        setupOnClickListener()
+        setupOnClickListeners()
         setupOnLongClickListener()
         setupOnSwipeListener(recyclerViewShopList)
     }
 
 
-    private fun setupOnClickListener() {
+    private fun setupOnClickListeners() {
         shopListAdapter.onUsualClickListener = {
-            Log.i("Clicked", "clicked + $it")
+            val intent = EditShopItemActivity.newIntent(this, it.id)
+            startActivity(intent)
+        }
+        floatingButton.setOnClickListener {
+            val intent = EditShopItemActivity.newIntent(this)
+            startActivity(intent)
         }
     }
 
