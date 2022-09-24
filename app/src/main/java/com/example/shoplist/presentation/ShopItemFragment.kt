@@ -1,5 +1,6 @@
 package com.example.shoplist.presentation
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -23,6 +24,16 @@ class ShopItemFragment : Fragment() {
     private lateinit var editNameInputLayout: TextInputLayout
     private lateinit var editCountInputLayout: TextInputLayout
 
+    private lateinit var onEditingFinishListener : OnEditingFinishListener
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if(context is OnEditingFinishListener) {
+            onEditingFinishListener = context
+        } else {
+            throw RuntimeException("Activity must implement OnEditingFinishListener")
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,7 +77,7 @@ class ShopItemFragment : Fragment() {
         }
         viewModel.shouldCloseScreen.observe(viewLifecycleOwner) {
             if(it == true) {
-                activity?.onBackPressed()
+                onEditingFinishListener.onEditFinish()
             }
         }
     }
@@ -86,26 +97,29 @@ class ShopItemFragment : Fragment() {
 
     private fun setListeners() {
         setTextChangedListeners()
-        val arguments = requireArguments()
-        if(arguments.containsKey(ARGUMENT_ID)) {
-            if(arguments.getInt(ARGUMENT_ID) == NO_ID) {
-                button.text = getString(R.string.add)
-                button.setOnClickListener {
-                    viewModel.addShopItem(editTextName.text, editTextCount.text)
-                }
-            } else {
-                viewModel.getShopItem(arguments.getInt(ARGUMENT_ID)).observe(viewLifecycleOwner) {
-                    editTextName.setText(it.name)
-                    editTextCount.setText(it.count.toString())
-                    setColorChecked(it.isChecked)
-                    button.text = getString(R.string.edit)
-                    button.setOnClickListener { _ ->
-                        viewModel.editShopItem(id = it.id, name = editTextName.text,
-                            count = editTextCount.text, isChecked = it.isChecked)
+        val arguments = arguments
+        arguments?.let { args ->
+            if(args.containsKey(ARGUMENT_ID)) {
+                if(args.getInt(ARGUMENT_ID) == NO_ID) {
+                    button.text = getString(R.string.add)
+                    button.setOnClickListener {
+                        viewModel.addShopItem(editTextName.text, editTextCount.text)
+                    }
+                } else {
+                    viewModel.getShopItem(args.getInt(ARGUMENT_ID)).observe(viewLifecycleOwner) {
+                        editTextName.setText(it.name)
+                        editTextCount.setText(it.count.toString())
+                        setColorChecked(it.isChecked)
+                        button.text = getString(R.string.edit)
+                        button.setOnClickListener { _ ->
+                            viewModel.editShopItem(id = it.id, name = editTextName.text,
+                                count = editTextCount.text, isChecked = it.isChecked)
+                        }
                     }
                 }
             }
         }
+
     }
 
     private fun setTextChangedListeners() {
@@ -125,6 +139,9 @@ class ShopItemFragment : Fragment() {
         })
     }
 
+    interface OnEditingFinishListener {
+        fun onEditFinish()
+    }
 
     private fun setColorChecked(isChecked : Boolean) {
         context?.let {

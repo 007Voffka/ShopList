@@ -1,9 +1,9 @@
 package com.example.shoplist.presentation
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -11,11 +11,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.shoplist.R
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishListener {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var shopListAdapter: ShopListAdapter
     private lateinit var floatingButton: FloatingActionButton
+
+    private var fragmentContainerView : FragmentContainerView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +28,11 @@ class MainActivity : AppCompatActivity() {
         viewModel.getShopList().observe(this) {
             shopListAdapter.submitList(it)
         }
+    }
+
+    private fun isOnePaneMode() : Boolean {
+        fragmentContainerView = findViewById(R.id.shop_item_container)
+        return fragmentContainerView == null
     }
 
     private fun setupRecyclerView() {
@@ -46,15 +53,37 @@ class MainActivity : AppCompatActivity() {
         setupOnSwipeListener(recyclerViewShopList)
     }
 
+    private fun setupFragment(id: Int = NO_ID) {
+        val fragment = ShopItemFragment.newInstanceAddItem(id)
+        supportFragmentManager.popBackStack()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.shop_item_container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    companion object {
+        private const val NO_ID = -1
+    }
 
     private fun setupOnClickListeners() {
         shopListAdapter.onUsualClickListener = {
-            val intent = EditShopItemActivity.newIntent(this, it.id)
-            startActivity(intent)
+            if(isOnePaneMode()) {
+                val intent = EditShopItemActivity.newIntent(this, it.id)
+                startActivity(intent)
+            } else {
+                setupFragment(it.id)
+            }
         }
-        floatingButton.setOnClickListener {
-            val intent = EditShopItemActivity.newIntent(this)
-            startActivity(intent)
+        if(isOnePaneMode()) {
+            floatingButton.setOnClickListener {
+                val intent = EditShopItemActivity.newIntent(this)
+                startActivity(intent)
+            }
+        } else {
+            floatingButton.setOnClickListener {
+                setupFragment()
+            }
         }
     }
 
@@ -87,5 +116,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onEditFinish() {
+        Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
+        supportFragmentManager.popBackStack()
     }
 }
