@@ -6,12 +6,14 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.shoplist.R
 
-class EditShopItemActivity : AppCompatActivity() {
+class EditShopItemActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_shop_item)
-        launchFragment()
+        if(savedInstanceState == null) {
+            launchFragment()
+        }
     }
 
     companion object {
@@ -33,10 +35,14 @@ class EditShopItemActivity : AppCompatActivity() {
                 ShopItemFragment.newInstanceAddItem(intent.getIntExtra(EXTRA_SHOP_ITEM_ID, 0))
             }
         supportFragmentManager.beginTransaction()
-            .add(R.id.shop_item_fragment_container, fragment)
+            .replace(R.id.shop_item_fragment_container, fragment)
             .commit()
         } else {
             throw RuntimeException("Error intent extra")
         }
+    }
+
+    override fun onEditFinish() {
+        finish()
     }
 }
