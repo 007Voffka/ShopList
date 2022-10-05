@@ -1,10 +1,8 @@
 package com.example.shoplist.domain
 
-import io.reactivex.rxjava3.core.Completable
-
 class AddShopItemUseCase(private val shopListRepository: ShopListRepository) {
 
-    fun addShopItem(shopItem: ShopItem) : Completable {
+    suspend fun addShopItem(shopItem: ShopItem) {
         return shopListRepository.addShopItem(shopItem)
     }
 }

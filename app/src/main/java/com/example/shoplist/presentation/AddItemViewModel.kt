@@ -2,22 +2,20 @@ package com.example.shoplist.presentation
 
 import android.app.Application
 import android.text.Editable
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.shoplist.data.ShopListRepositoryImpl
 import com.example.shoplist.domain.AddShopItemUseCase
 import com.example.shoplist.domain.EditShopItemUseCase
 import com.example.shoplist.domain.GetShopItemUseCase
 import com.example.shoplist.domain.ShopItem
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.launch
 
 class AddItemViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = ShopListRepositoryImpl(application)
-    private val compositeDisposable = CompositeDisposable()
 
     private val editShopListUseCase = EditShopItemUseCase(repository)
     private val addShopItemUseCase = AddShopItemUseCase(repository)
@@ -35,55 +33,54 @@ class AddItemViewModel(application: Application) : AndroidViewModel(application)
     val shouldCloseScreen : LiveData<Boolean>
         get() = _shouldCloseScreen
 
+    private val _shopItem = MutableLiveData<ShopItem>()
+    val shopItem : LiveData<ShopItem>
+    get() = _shopItem
 
-    fun getShopItem(id : Int) : LiveData<ShopItem> {
-        return getShopItemUseCase.getShopItem(id)
+
+    fun getShopItem(id : Int) {
+        viewModelScope.launch {
+            val shopItem = getShopItemUseCase.getShopItem(id)
+            _shopItem.postValue(shopItem)
+        }
     }
 
     fun addShopItem(name : Editable, count : Editable) {
-        if (checkNameIsCorrect(name) && checkCountIsCorrect(count)) {
+        if (!checkNameIsError(name) && !checkCountIsError(count)) {
             val correctName = name.toString().trim()
             val correctCount = count.toString().trim().toInt()
             val shopItem = ShopItem(correctName, correctCount, false)
-            val disposable = addShopItemUseCase.addShopItem(shopItem)
-                .subscribeOn(Schedulers.io())
-                .subscribe({
-                }, {
-                    Log.i("Here is exception", it.toString())
-                })
+            viewModelScope.launch {
+                addShopItemUseCase.addShopItem(shopItem)
+            }
             _shouldCloseScreen.value = true
-            compositeDisposable.add(disposable)
         }
     }
 
     fun editShopItem(id : Int, name : Editable, count : Editable, isChecked : Boolean) {
-        if (checkNameIsCorrect(name) && checkCountIsCorrect(count)) {
+        if (!checkNameIsError(name) && !checkCountIsError(count)) {
             val correctName = name.toString().trim()
             val correctCount = count.toString().trim().toInt()
-            val disposable = editShopListUseCase.editShopItem(id, correctName, correctCount, isChecked)
-                .subscribeOn(Schedulers.io())
-                .subscribe({
-                }, {
-                    Log.i("Here is exception", it.toString())
-                })
+            viewModelScope.launch {
+                editShopListUseCase.editShopItem(id, correctName, correctCount, isChecked)
+            }
             _shouldCloseScreen.value = true
-            compositeDisposable.add(disposable)
         }
     }
-    private fun checkNameIsCorrect(name : Editable) : Boolean {
+    private fun checkNameIsError(name : Editable) : Boolean {
         return if(name.toString().trim() != "") {
-            true
+            false
         } else {
             _errorInputName.value = true
-            false
+             true
         }
     }
-    private fun checkCountIsCorrect(count : Editable) : Boolean {
+    private fun checkCountIsError(count : Editable) : Boolean {
         return if(count.toString().trim() != "" && count.toString().trim().toInt() > 0) {
-            true
+            false
         } else {
             _errorInputCount.value = true
-            false
+            true
         }
     }
     fun textIsWriting() {

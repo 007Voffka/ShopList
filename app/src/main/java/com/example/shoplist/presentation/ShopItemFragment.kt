@@ -7,24 +7,22 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.shoplist.R
-import com.google.android.material.textfield.TextInputLayout
+import com.example.shoplist.databinding.EditShopItemFragmentBinding
 
 class ShopItemFragment : Fragment() {
 
     private lateinit var viewModel: AddItemViewModel
-    private lateinit var editTextName: EditText
-    private lateinit var editTextCount: EditText
-    private lateinit var button: Button
-    private lateinit var editNameInputLayout: TextInputLayout
-    private lateinit var editCountInputLayout: TextInputLayout
+
+    private var _binding: EditShopItemFragmentBinding? = null
+    private val binding: EditShopItemFragmentBinding
+    get() = _binding ?: throw RuntimeException("EditShopItemFragmentBinding == null")
 
     private lateinit var onEditingFinishListener : OnEditingFinishListener
+
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -39,45 +37,41 @@ class ShopItemFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.edit_shop_item_fragment, container, false)
+    ): View {
+        _binding = EditShopItemFragmentBinding.inflate(layoutInflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initViews(view)
+        viewModel = ViewModelProvider(this)[AddItemViewModel::class.java]
         observeViewModels()
         setListeners()
     }
 
-    private fun initViews(view : View) {
-        viewModel = ViewModelProvider(this)[AddItemViewModel::class.java]
-        editTextName = view.findViewById(R.id.editTextNameEditActivity)
-        editTextCount = view.findViewById(R.id.editTextCountEditActivity)
-        button = view.findViewById(R.id.buttonEditItem)
-        editNameInputLayout = view.findViewById(R.id.textInputLayoutName)
-        editCountInputLayout = view.findViewById(R.id.textInputLayoutCount)
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
     }
 
     private fun observeViewModels() {
-        viewModel.errorInputCount.observe(viewLifecycleOwner) {
-            if(it == true) {
-                editCountInputLayout.error = getString(R.string.invalid_number_error)
-            } else {
-                editCountInputLayout.error = null
-            }
-        }
-        viewModel.errorInputName.observe(viewLifecycleOwner) {
-            if(it == true) {
-                editNameInputLayout.error = getString(R.string.invalid_text_error)
-            }
-            else {
-                editNameInputLayout.error = null
-            }
-        }
         viewModel.shouldCloseScreen.observe(viewLifecycleOwner) {
             if(it == true) {
                 onEditingFinishListener.onEditFinish()
+            }
+        }
+        viewModel.errorInputName.observe(viewLifecycleOwner) {
+            if(it) {
+                binding.textInputLayoutName.error = getString(R.string.invalid_text_error)
+            } else {
+                binding.textInputLayoutName.error = null
+            }
+        }
+        viewModel.errorInputCount.observe(viewLifecycleOwner) {
+            if(it) {
+                binding.textInputLayoutCount.error = getString(R.string.invalid_number_error)
+            } else {
+                binding.textInputLayoutCount.error = null
             }
         }
     }
@@ -101,36 +95,48 @@ class ShopItemFragment : Fragment() {
         arguments?.let { args ->
             if(args.containsKey(ARGUMENT_ID)) {
                 if(args.getInt(ARGUMENT_ID) == NO_ID) {
-                    button.text = getString(R.string.add)
-                    button.setOnClickListener {
-                        viewModel.addShopItem(editTextName.text, editTextCount.text)
+                    binding.buttonEditItem.text = getString(R.string.add)
+                    binding.buttonEditItem.setOnClickListener {
+                            binding.editTextNameEditActivity.text?.let { name ->
+                                binding.editTextCountEditActivity.text?.let { count ->
+                                    viewModel.addShopItem(
+                                        name,
+                                        count
+                                    )
+                                }
+                            }
                     }
                 } else {
-                    viewModel.getShopItem(args.getInt(ARGUMENT_ID)).observe(viewLifecycleOwner) {
-                        editTextName.setText(it.name)
-                        editTextCount.setText(it.count.toString())
-                        setColorChecked(it.isChecked)
-                        button.text = getString(R.string.edit)
-                        button.setOnClickListener { _ ->
-                            viewModel.editShopItem(id = it.id, name = editTextName.text,
-                                count = editTextCount.text, isChecked = it.isChecked)
+                    viewModel.shopItem.observe(viewLifecycleOwner) { shopItem ->
+                        binding.editTextNameEditActivity.setText(shopItem.name)
+                        binding.editTextCountEditActivity.setText(shopItem.count.toString())
+                        setColorChecked(shopItem.isChecked)
+                        binding.buttonEditItem.text = getString(R.string.edit)
+                        binding.buttonEditItem.setOnClickListener {
+                            binding.editTextNameEditActivity.text?.let { name ->
+                                binding.editTextCountEditActivity.text?.let { count ->
+                                    viewModel.editShopItem(id = shopItem.id, name = name,
+                                        count = count, isChecked = shopItem.isChecked)
+                                }
+                            }
                         }
+                    }
+                    viewModel.getShopItem(args.getInt(ARGUMENT_ID))
                     }
                 }
             }
-        }
 
     }
 
     private fun setTextChangedListeners() {
-        editTextName.addTextChangedListener(object : TextWatcher {
+        binding.editTextNameEditActivity.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 viewModel.textIsWriting()
             }
             override fun afterTextChanged(p0: Editable?) {}
         })
-        editTextCount.addTextChangedListener(object : TextWatcher {
+        binding.editTextCountEditActivity.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 viewModel.textIsWriting()
@@ -146,22 +152,22 @@ class ShopItemFragment : Fragment() {
     private fun setColorChecked(isChecked : Boolean) {
         context?.let {
             if(isChecked) {
-            editCountInputLayout.background = ContextCompat.getDrawable(it,
+            binding.textInputLayoutCount.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
-            editNameInputLayout.background = ContextCompat.getDrawable(it,
+            binding.textInputLayoutName.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
-            editTextName.background = ContextCompat.getDrawable(it,
+            binding.editTextNameEditActivity.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
-            editTextCount.background = ContextCompat.getDrawable(it,
+            binding.editTextCountEditActivity.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
         } else {
-            editCountInputLayout.background = ContextCompat.getDrawable(it,
+            binding.textInputLayoutCount.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
-            editNameInputLayout.background = ContextCompat.getDrawable(it,
+                binding.textInputLayoutName.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
-            editTextName.background = ContextCompat.getDrawable(it,
+                binding.editTextNameEditActivity.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
-            editTextCount.background = ContextCompat.getDrawable(it,
+                binding.editTextCountEditActivity.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
         }
         }

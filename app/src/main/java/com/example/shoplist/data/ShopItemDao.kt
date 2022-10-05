@@ -7,23 +7,22 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.shoplist.domain.ShopItem
 import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Single
 
 @Dao
 interface ShopItemDao {
 
     @Query("SELECT * FROM shopItems")
-    fun getAllShopItems() : LiveData<List<ShopItem>>
+    fun getAllShopItems() : LiveData<List<ShopItemDBVersion>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun addShopItem(shopItem: ShopItem) : Completable
+    suspend fun addShopItem(shopItem: ShopItemDBVersion)
 
     @Query("SELECT * FROM shopItems WHERE id == :id LIMIT 1")
-    fun getShopItem(id : Int) : LiveData<ShopItem>
+    suspend fun getShopItem(id : Int) : ShopItemDBVersion
 
     @Query("DELETE FROM shopItems WHERE id == :id")
-    fun deleteShopItem(id : Int) : Completable
+    suspend fun deleteShopItem(id : Int)
 
     @Query("UPDATE shopItems SET name = :name, count = :count, isChecked = :isChecked WHERE id = :id")
-    fun editShopItem(id : Int, name : String, count : Int, isChecked : Boolean) : Completable
+    suspend fun editShopItem(id : Int, name : String, count : Int, isChecked : Boolean)
 }

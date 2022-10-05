@@ -2,8 +2,12 @@ package com.example.shoplist.presentation
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.ListAdapter
 import com.example.shoplist.R
+import com.example.shoplist.databinding.ShopItemBinding
+import com.example.shoplist.databinding.ShopItemCheckedBinding
 import com.example.shoplist.domain.ShopItem
 
 class ShopListAdapter : ListAdapter<ShopItem, ShopListViewHolder>(ShopItemDiffCallback()) {
@@ -32,20 +36,30 @@ class ShopListAdapter : ListAdapter<ShopItem, ShopListViewHolder>(ShopItemDiffCa
         } else {
             R.layout.shop_item_checked
         }
-        val view = LayoutInflater.from(parent.context)
-            .inflate(layoutResId, parent, false)
-        return ShopListViewHolder(view)
+        val binding = DataBindingUtil.inflate<ViewDataBinding>(LayoutInflater.from(parent.context),
+            layoutResId,
+            parent, false)
+        return ShopListViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ShopListViewHolder, position: Int) {
         val shopItem = getItem(position)
-        holder.textViewName.text = shopItem.name
-        holder.textViewCount.text = shopItem.count.toString()
-        holder.itemView.setOnLongClickListener {
+        val binding = holder.binding
+        when(binding) {
+            is ShopItemCheckedBinding -> {
+                binding.textViewName.text = shopItem.name
+                binding.textViewCount.text = shopItem.count.toString()
+            }
+            is ShopItemBinding -> {
+                binding.textViewName.text = shopItem.name
+                binding.textViewCount.text = shopItem.count.toString()
+            }
+        }
+        binding.root.setOnLongClickListener {
             onLongClickListener?.invoke(shopItem)
             true
         }
-        holder.itemView.setOnClickListener {
+        binding.root.setOnClickListener {
             onUsualClickListener?.invoke(shopItem)
         }
     }

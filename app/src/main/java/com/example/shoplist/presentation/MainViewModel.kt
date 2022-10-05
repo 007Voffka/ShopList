@@ -1,18 +1,19 @@
 package com.example.shoplist.presentation
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
 import com.example.shoplist.data.ShopListRepositoryImpl
-import com.example.shoplist.domain.*
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import com.example.shoplist.domain.DeleteShopItemUseCase
+import com.example.shoplist.domain.EditShopItemUseCase
+import com.example.shoplist.domain.GetShopListUseCase
+import com.example.shoplist.domain.ShopItem
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = ShopListRepositoryImpl(application)
-    private val compositeDisposable = CompositeDisposable()
 
     private val getShopListUseCase = GetShopListUseCase(repository)
     private val deleteShopListUseCase = DeleteShopItemUseCase(repository)
@@ -23,27 +24,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun editShopItem(id : Int, name : String, count : Int, isChecked : Boolean) {
-        val disposable = editShopListUseCase.editShopItem(id, name, count, isChecked)
-            .subscribeOn(Schedulers.io())
-            .subscribe({
-            }, {
-                Log.i("Here is exception", it.toString())
-            })
-        compositeDisposable.add(disposable)
+        viewModelScope.launch {
+            editShopListUseCase.editShopItem(id, name, count, isChecked)
+        }
     }
 
     fun deleteShopItem(itemId : Int) {
-        val disposable = deleteShopListUseCase.deleteShopItem(itemId)
-            .subscribeOn(Schedulers.io())
-            .subscribe({
-            }, {
-                Log.i("Here is exception", it.toString())
-            })
-        compositeDisposable.add(disposable)
-    }
-
-    override fun onCleared() {
-        compositeDisposable.dispose()
-        super.onCleared()
+        viewModelScope.launch {
+            deleteShopListUseCase.deleteShopItem(itemId)
+        }
     }
 }
