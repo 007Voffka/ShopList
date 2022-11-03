@@ -12,9 +12,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.shoplist.R
 import com.example.shoplist.databinding.EditShopItemFragmentBinding
+import com.example.shoplist.presentation.view_models.AddItemViewModel
+import com.example.shoplist.presentation.view_models.ViewModelFactory
+import javax.inject.Inject
 
 class ShopItemFragment : Fragment() {
 
+    @Inject
+    lateinit var viewModelFactory: ViewModelFactory
     private lateinit var viewModel: AddItemViewModel
 
     private var _binding: EditShopItemFragmentBinding? = null
@@ -26,6 +31,7 @@ class ShopItemFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        (activity?.application as ShopListApp).component.inject(this)
         if(context is OnEditingFinishListener) {
             onEditingFinishListener = context
         } else {
@@ -44,7 +50,7 @@ class ShopItemFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(this)[AddItemViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[AddItemViewModel::class.java]
         observeViewModels()
         setListeners()
     }
@@ -97,8 +103,8 @@ class ShopItemFragment : Fragment() {
                 if(args.getInt(ARGUMENT_ID) == NO_ID) {
                     binding.buttonEditItem.text = getString(R.string.add)
                     binding.buttonEditItem.setOnClickListener {
-                            binding.editTextNameEditActivity.text?.let { name ->
-                                binding.editTextCountEditActivity.text?.let { count ->
+                            binding.editTextNameFragment.text?.let { name ->
+                                binding.editTextCountFragment.text?.let { count ->
                                     viewModel.addShopItem(
                                         name,
                                         count
@@ -108,13 +114,13 @@ class ShopItemFragment : Fragment() {
                     }
                 } else {
                     viewModel.shopItem.observe(viewLifecycleOwner) { shopItem ->
-                        binding.editTextNameEditActivity.setText(shopItem.name)
-                        binding.editTextCountEditActivity.setText(shopItem.count.toString())
+                        binding.editTextNameFragment.setText(shopItem.name)
+                        binding.editTextCountFragment.setText(shopItem.count.toString())
                         setColorChecked(shopItem.isChecked)
                         binding.buttonEditItem.text = getString(R.string.edit)
                         binding.buttonEditItem.setOnClickListener {
-                            binding.editTextNameEditActivity.text?.let { name ->
-                                binding.editTextCountEditActivity.text?.let { count ->
+                            binding.editTextNameFragment.text?.let { name ->
+                                binding.editTextCountFragment.text?.let { count ->
                                     viewModel.editShopItem(id = shopItem.id, name = name,
                                         count = count, isChecked = shopItem.isChecked)
                                 }
@@ -129,14 +135,14 @@ class ShopItemFragment : Fragment() {
     }
 
     private fun setTextChangedListeners() {
-        binding.editTextNameEditActivity.addTextChangedListener(object : TextWatcher {
+        binding.editTextNameFragment.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 viewModel.textIsWriting()
             }
             override fun afterTextChanged(p0: Editable?) {}
         })
-        binding.editTextCountEditActivity.addTextChangedListener(object : TextWatcher {
+        binding.editTextCountFragment.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 viewModel.textIsWriting()
@@ -156,18 +162,18 @@ class ShopItemFragment : Fragment() {
                 R.color.item_background_checked)
             binding.textInputLayoutName.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
-            binding.editTextNameEditActivity.background = ContextCompat.getDrawable(it,
+            binding.editTextNameFragment.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
-            binding.editTextCountEditActivity.background = ContextCompat.getDrawable(it,
+            binding.editTextCountFragment.background = ContextCompat.getDrawable(it,
                 R.color.item_background_checked)
         } else {
             binding.textInputLayoutCount.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
                 binding.textInputLayoutName.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
-                binding.editTextNameEditActivity.background = ContextCompat.getDrawable(it,
+                binding.editTextNameFragment.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
-                binding.editTextCountEditActivity.background = ContextCompat.getDrawable(it,
+                binding.editTextCountFragment.background = ContextCompat.getDrawable(it,
                 R.color.item_background)
         }
         }

@@ -1,8 +1,10 @@
 package com.example.shoplist.domain
 
-import io.reactivex.rxjava3.core.Completable
+import javax.inject.Inject
 
-class DeleteShopItemUseCase(private val shopListRepository: ShopListRepository) {
+class DeleteShopItemUseCase @Inject constructor(
+    private val shopListRepository: ShopListRepository
+    ) {
     suspend fun deleteShopItem(id : Int) {
         return shopListRepository.deleteShopItem(id)
     }

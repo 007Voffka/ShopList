@@ -1,4 +1,4 @@
-package com.example.shoplist.presentation
+package com.example.shoplist.presentation.rw
 
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView

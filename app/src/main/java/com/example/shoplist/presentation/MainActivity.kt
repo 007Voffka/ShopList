@@ -9,21 +9,29 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoplist.R
 import com.example.shoplist.databinding.ActivityMainBinding
+import com.example.shoplist.presentation.rw.ShopListAdapter
+import com.example.shoplist.presentation.view_models.MainViewModel
+import com.example.shoplist.presentation.view_models.ViewModelFactory
+import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishListener {
 
-    private lateinit var viewModel: MainViewModel
+    @Inject
+    lateinit var viewModelFactory: ViewModelFactory
     private lateinit var shopListAdapter: ShopListAdapter
+    private lateinit var viewModel : MainViewModel
 
-    private val binding by lazy {
-        ActivityMainBinding.inflate(layoutInflater)
-    }
+    private var _binding : ActivityMainBinding? = null
+    private val binding : ActivityMainBinding
+    get() = _binding ?: throw RuntimeException("ActivityMainBinding = null")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
+        (application as ShopListApp).component.inject(this)
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         setContentView(binding.root)
         setupRecyclerView()
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         viewModel.getShopList().observe(this) {
             shopListAdapter.submitList(it)
         }
@@ -118,5 +126,10 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishListen
     override fun onEditFinish() {
         Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
         supportFragmentManager.popBackStack()
+    }
+
+    override fun onDestroy() {
+        _binding = null
+        super.onDestroy()
     }
 }
